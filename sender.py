@@ -4,10 +4,10 @@ import socket
 import select
 import sys
 
-packet_size = 2
-lost_percent = 0.2
-timeout = 10
-window_size = 4
+packet_size = 2 # 每个 packet 的大小
+lost_percent = 0.2 # 丢包率
+timeout = 10 # 超时时间
+window_size = 4 # 窗口大小
 start_num =0
 message = "hello!world0123456789"
 packets = [message[i:i+packet_size]
@@ -32,7 +32,6 @@ def send_window_packets():
         time.sleep(1)
         print(
             f"发送方为起始packet号码为{start_num}的窗口: 发送packet {j}, 序列号为 {seq_num}, 内容为'{packets[j]}'")
-
         # 记录发送时间
         timer[j] = time.time()
 
@@ -85,4 +84,3 @@ def receive_ACK():
 
 
 send_window_packets()
-receive_ACK()
