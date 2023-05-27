@@ -75,7 +75,6 @@ def receive_ACK():
                         sys.exit()
 
         else :
-          print(f"超时, 重传packet {start_num}")
           if start_num <= len(packets):
             print(f"超时, 重传packet {start_num}")
             send_window_packets()

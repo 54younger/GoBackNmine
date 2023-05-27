@@ -26,11 +26,11 @@ def receive_window_packets():
             data, addr = sender.recvfrom(1024)
             seq_num, message = eval(data.decode())
             #返回ACK
-            print(f"接收方: 收到packet {seq_num}, 内容为'{message} ,发送ACK {ack_num}'")
+            print(f"接收方: 收到packet {seq_num}, 内容为'{message} ,发送ACK {seq_num}'")
             if random.uniform(0,1) < lost_percent:
                 print(f"packet {seq_num}的ACK丢失")
             else:
-                sender.sendto(chr(ack_num).encode(), client_sender_address)
+                sender.sendto(chr(seq_num).encode(), client_sender_address)
             if seq_num==ack_num:#从未丢包
                 ack_num+=1
             else:#丢包
