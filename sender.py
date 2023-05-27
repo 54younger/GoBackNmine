@@ -68,8 +68,6 @@ def receive_ACK():
                     if start_num <= len(packets):
                         send_window_packets()
                         break
-                    else:
-                        break
                 else :
                     while time.time() - timer[start_num] < timeout:
                         pass
