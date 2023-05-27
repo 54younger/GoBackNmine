@@ -4,7 +4,7 @@ import socket
 import select
 
 packet_size = 2
-lost_percent = 0
+lost_percent = 0.2
 timeout = 10
 window_size = 4
 ack_num =0
@@ -21,7 +21,7 @@ def receive_window_packets():
     global ack_num
     # 等待套接字准备就绪
     while True:
-        ready = select.select([sender], [], [], 1000)
+        ready = select.select([sender], [], [], 60)
         if ready[0]:
             data, addr = sender.recvfrom(1024)
             seq_num, message = eval(data.decode())

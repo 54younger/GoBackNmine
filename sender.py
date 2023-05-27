@@ -2,13 +2,14 @@ import time
 import random
 import socket
 import select
+import sys
 
 packet_size = 2
-lost_percent = 0
+lost_percent = 0.2
 timeout = 10
 window_size = 4
 start_num =0
-message = "hello!world1234567890"
+message = "hello!world0123456789"
 packets = [message[i:i+packet_size]
                for i in range(0, len(message), packet_size)]
 
@@ -52,8 +53,8 @@ def receive_ACK():
     final_ack = start_num+window_size
 
     while True:
-        ready = select.select([receiver], [], [], 1000)
         if time.time() - timer[start_num] < timeout:
+            ready = select.select([receiver], [], [], 60)
             if ready[0]:
                 ack, addr = receiver.recvfrom(1024)
                 ack=ord(ack.decode())
@@ -63,21 +64,19 @@ def receive_ACK():
                         timer[i] = time.time()
                 start_num = ack+1
                 print(f"收到ACK {ack}, 窗口左边界为{start_num}")
-                if ack == final_ack:#超时或一个窗口内全部发送完毕
-                    #不是最后一个包，继续发送
-                    if start_num <= len(packets):
+                if start_num == final_ack:#一个窗口内全部发送完毕
+                    #print("不是最后一个包，继续发送")
+                    if start_num < len(packets):
+                        final_ack = min(start_num + window_size, len(packets))
+                        print(f"窗口内全部发送完毕并收到ACK \n")
                         send_window_packets()
-                        break
                 else :
-                    while time.time() - timer[start_num] < timeout:
-                        pass
-                    if start_num <= len(packets):
-                        send_window_packets()
-                        break
-                    else:
-                        break
+                    if start_num == len(packets):
+                        print("发送完毕")
+                        sys.exit()
 
         else :
+          print(f"超时, 重传packet {start_num}")
           if start_num <= len(packets):
             print(f"超时, 重传packet {start_num}")
             send_window_packets()
