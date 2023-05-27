@@ -35,7 +35,7 @@ def send_window_packets():
         # 记录发送时间
         timer[j] = time.time()
 
-        if random.random() < lost_percent:
+        if random.uniform(0,1) < lost_percent:
             print(f"发送方: packet {j} 丢失")
 
         else:
@@ -44,25 +44,47 @@ def send_window_packets():
             receiver.sendto(str(send_pkt).encode(), client_receiver_address)
 
         seq_num += 1
-    return seq
+    receive_ACK()
+
 
 def receive_ACK():
     global timer_window, start_num
     final_ack = start_num+window_size
-    ready = select.select([receiver], [], [], 1000)
+
     while True:
-        if ready[0]:
-            ack, addr = receiver.recvfrom(1024)
-            ack=ord(ack.decode())
-            if ack>start_num:
-                # 重置定时器至最后一个未收到 ACK 的 packet
-                for i in range(start_num, ack):
-                    timer[i] = time.time()
+        ready = select.select([receiver], [], [], 1000)
+        if time.time() - timer[start_num] < timeout:
+            if ready[0]:
+                ack, addr = receiver.recvfrom(1024)
+                ack=ord(ack.decode())
+                if ack>start_num:
+                    # 重置定时器至最后一个未收到 ACK 的 packet
+                    for i in range(start_num, ack):
+                        timer[i] = time.time()
                 start_num = ack+1
-            print(f"接收方: 收到ACK {ack}, 窗口左边界为{start_num}")
-            if ack == final_ack or time.time() - timer[start_num] > timeout:
-                send_window_packets()
-                break
+                print(f"收到ACK {ack}, 窗口左边界为{start_num}")
+                if ack == final_ack:#超时或一个窗口内全部发送完毕
+                    #不是最后一个包，继续发送
+                    if start_num <= len(packets):
+                        send_window_packets()
+                        break
+                    else:
+                        break
+                else :
+                    while time.time() - timer[start_num] < timeout:
+                        pass
+                    if start_num <= len(packets):
+                        send_window_packets()
+                        break
+                    else:
+                        break
+
+        else :
+          if start_num <= len(packets):
+            print(f"超时, 重传packet {start_num}")
+            send_window_packets()
+          break
+
 
 
 send_window_packets()

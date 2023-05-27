@@ -7,7 +7,7 @@ packet_size = 2
 lost_percent = 0
 timeout = 10
 window_size = 4
-start_num =0
+ack_num =0
 
 client_sender_address = (socket.gethostbyname(socket.gethostname()), 8001)
 sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -18,23 +18,22 @@ sender.bind(address)
 sender.setblocking(False)
 
 def receive_window_packets():
-    global start_num
+    global ack_num
     # 等待套接字准备就绪
-    ready = select.select([sender], [], [], timeout)
     while True:
+        ready = select.select([sender], [], [], 1000)
         if ready[0]:
             data, addr = sender.recvfrom(1024)
             seq_num, message = eval(data.decode())
-            #如果丢包
-            if random.random() < lost_percent:
-                print(f"接收方: packet {seq_num} 丢失")
+            #返回ACK
+            print(f"接收方: 收到packet {seq_num}, 内容为'{message} ,发送ACK {ack_num}'")
+            if random.uniform(0,1) < lost_percent:
+                print(f"packet {seq_num}的ACK丢失")
             else:
-                #返回ACK
-                if seq_num==start_num:
-                  start_num +=1
-
-                print(f"接收方: 收到packet {seq_num}, 内容为'{message} ,发送ACK {start_num-1}'")
-                sender.sendto(chr(start_num-1).encode(), client_sender_address)
-
+                sender.sendto(chr(ack_num).encode(), client_sender_address)
+            if seq_num==ack_num:#从未丢包
+                ack_num+=1
+            else:#丢包
+                pass
 
 receive_window_packets()
